@@ -1,81 +1,35 @@
-# -*- coding: utf-8 -*-
-
-import sys
 import argparse
-import logging
-import toolbox.configuration as conf
+from option import appendTypeQuantity
 
-class appendTypeQuantity(argparse.Action):
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs == 2:
-            super(appendTypeQuantity, self).__init__(option_strings, dest, nargs=nargs, **kwargs)
-        else:
-            logging.error("Option %s must have 2 arguments in its definition" % option_strings)
-    def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            quantity = abs(int(values[1]))
-        except ValueError:
-            logging.warning("Quantity Input value is Not A Number (NaN): '" + values[1] + "'. Using None instead, and apply rules (see man page)")
-            values[1] = None
-        else:
-            values[1] = quantity if quantity <= 100 else None
+parser = argparse.ArgumentParser(description='Création de la playlist.')
+parser.add_argument('-g', "--genre", action = 'append', nargs = 2, help='Genre de musique que in veut écouter') 
+parser.add_argument('-d', "--duration", action = 'append',type=int, required=True, help='Durée de la playlist' ) 
+parser.add_argument('-s', "--sub_genre",action = 'append', nargs = 2, help='Sous genre de la musique') 
+parser.add_argument('-b', "--band",action = 'append', nargs = 2, help='Nom du groupe de musique')
+parser.add_argument('-a', "--album",action = 'append', nargs = 2, help='Nom de album')
+parser.add_argument('-t', "--title",action = 'append', nargs = 2, help='Titre de la musique') 
+parser.add_argument('-f', "--format",choices = ['m3u','xspf'], help='choix du format d écoute')
+parser.add_argument('-n', "--nom", help='nom de la playliste')
 
-        current_dest_value = getattr(namespace, self.dest)
-        if type(current_dest_value) is list:
-            current_dest_value.append(values)
-            setattr(namespace, self.dest, current_dest_value)
-        else:
-            logging.debug(values)
-            setattr(namespace, self.dest, [values])
+args=parser.parse_args()
 
+if args.genre:
+	print("Genre :\n")
+	for choix in args.genre:
+        	print(choix[0] + " " + choix[1] + "%\n")
 
-class CLI(object):
-    def __init__(self):
-        self.arguments = argparse.Namespace()
-        self.mon_parser_general = argparse.ArgumentParser()
-        self.non_regexp_group = self.mon_parser_general.add_argument_group("Simple filtering options")
-        self.regexp_group = self.mon_parser_general.add_argument_group("RegExp filtering")
-        self.setupParsingCLI()
+if args.band:
+	print("Groupe :\n")
+	for choix in args.band:
+		print(choix[0] + " " + choix[1] + "%\n")
 
-    def performParsingCLI(self):
-        self.arguments = self.mon_parser_general.parse_args()
+if args.title:
+	print("Titre :\n")
+	for choix in args.title:
+		print(choix[0] + " " + choix[1] + "%\n")
 
-    def setupParsingCLI(self):
-        self.mon_parser_general.add_argument("--time",
-                                             required=True,
-                                             type=int,
-                                             metavar="LENGTH_IN_MINUTES",
-                                             help="Total playlist length, in minutes")
-        self.mon_parser_general.add_argument("--log",
-                                             choices=['DEBUG','INFO','WARNING','ERROR','CRITICAL'],
-                                             default='WARNING')
-        self.mon_parser_general.add_argument("--log-filename",
-                                             nargs='?',
-                                             type=str,
-                                             metavar="FILENAME",
-                                             const="output.log",
-                                             help="Output logging filename")
-        self.mon_parser_general.add_argument("--output",
-                                             nargs=2,
-                                             metavar=("{"+','.join(format for format in conf.liste_des_formats_de_sortie)+"}", 'FILENAME'),
-                                             help="Output format {"+','.join(format for format in conf.liste_des_formats_de_sortie)+"} followed by filename (absolute or relative path, or '-' for stdout)",
-                                             default=['m3u','-'])
+if args.sub_genre:
+	print("Sous-Genre :\n")
+	for choix in args.sub_genre:
+		print(choix[0] + " " + choix[1] + "%\n")
 
-        for Argument in conf.dictArgumentsCLI:
-            currentArgument = conf.dictArgumentsCLI[Argument]
-            self.non_regexp_group.add_argument(currentArgument['short'],
-                                               currentArgument['long'],
-                                               action=appendTypeQuantity,
-                                               dest=Argument,
-                                               nargs=2,
-                                               metavar=(currentArgument['metavar'], 'QUANTITY'),
-                                               help=currentArgument['help']
-                                           )
-            self.regexp_group.add_argument(currentArgument['short'].upper(),
-                                           currentArgument['long'].upper(),
-                                           action=appendTypeQuantity,
-                                           dest=Argument,
-                                           nargs=2,
-                                           metavar=(currentArgument['metavar'].upper(), 'QUANTITY'),
-                                           help=currentArgument['help']
-                                       )

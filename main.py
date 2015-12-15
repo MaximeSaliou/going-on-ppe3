@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+#Ecrit par Gregory David
 import sys
 import logging
 import toolbox.configuration as conf
